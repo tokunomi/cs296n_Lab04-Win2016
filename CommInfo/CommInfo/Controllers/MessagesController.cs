@@ -43,7 +43,7 @@ namespace CommInfo.Controllers
         public ActionResult Create()
         {
             ViewBag.FromList =
-                new SelectList(db.Messages.OrderBy(m => m.From), "MessageID", "From");
+                new SelectList(db.Members.OrderBy(m => m.Username), "MemberID", "Username");
 
             ViewBag.ThreadList =
                 new SelectList(db.Threads.OrderBy(t => t.Topic), "ThreadID", "Topic");
@@ -56,13 +56,16 @@ namespace CommInfo.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "MessageID,Date,From,Subject,Body, ThreadItem, ThreadList, FromList")] MessageViewModel messageVM, int? ThreadList, int FromList)
+        public ActionResult Create([Bind(Include = "MessageID,Date,From,Subject,Body, ThreadItem, ThreadList, MemberItem, FromList")] MessageViewModel messageVM, int? ThreadList, int FromList, string topicName)
         {
             if (ModelState.IsValid)
             {
-                Message messageFrom = (from m in db.Messages
-                                   where m.MessageID == FromList
-                                   select m).FirstOrDefault();
+                Member fromMember = (from mb in db.Members
+                                 where mb.MemberID == FromList
+                                 select mb).FirstOrDefault();
+                //Message messageFrom = (from m in db.Messages
+                //                   where m.MessageID == FromList
+                //                   select m).FirstOrDefault();
 
                 Thread thread = (from t in db.Threads
                                  where t.ThreadID == ThreadList
@@ -70,19 +73,33 @@ namespace CommInfo.Controllers
 
                 if (thread == null)
                 {
-                    db.Threads.Add(new Thread { Topic = messageVM.ThreadItem.Topic }); //
+                    thread = new Thread();
+                    thread.Topic = topicName;
+                    //thread.Topic = messageVM.ThreadItem.Topic;
+                    //db.Threads.Add(new Thread { Topic = messageVM.ThreadItem.Topic }); //
+                    db.Threads.Add(thread); 
                 }
 
-                Message message = new Message()
-                {
-                    MessageID = messageVM.MessageID,
-                    Date = messageVM.Date,
-                    From = messageVM.From,
-                    Subject = messageVM.Subject,
-                    ThreadID = messageVM.ThreadID
-                };
+                //Message message = new Message()
+                //{
+                //    Date = messageVM.Date,
+                //    From = fromMember.Username,
+                //    Subject = messageVM.Subject,
+                //    Body = messageVM.Body,
+                //    ThreadID = thread.ThreadID,
+                //    MemberID = fromMember.MemberID
+                //};
 
-                db.Messages.Add(message);
+                Message message = new Message();
+                    message.Date = messageVM.Date;
+                    message.From = fromMember.Username;
+                    message.Subject = messageVM.Subject;
+                    message.Body = messageVM.Body;
+                    message.MemberID = fromMember.MemberID;
+
+                thread.Messages.Add(message);
+
+                //db.Messages.Add(message);
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
@@ -93,11 +110,18 @@ namespace CommInfo.Controllers
         // GET: Messages/Edit/5
         public ActionResult Edit(int? id)
         {
+            ViewBag.FromList =
+                new SelectList(db.Members.OrderBy(m => m.Username), "MemberID", "Username");
+
+            //ViewBag.ThreadList =
+            //    new SelectList(db.Threads.OrderBy(t => t.Topic), "ThreadID", "Topic");
+
             if (id == null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Message message = db.Messages.Find(id);
+            MessageViewModel message = GetMessageAndThread(id);
+            //Message message = db.Messages.Find(id);
             if (message == null)
             {
                 return HttpNotFound();
@@ -110,15 +134,19 @@ namespace CommInfo.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "MessageID,Date,To,From,Subject,Body")] Message message)
+        public ActionResult Edit([Bind(Include = "MessageID,Date,From,Subject,Topic,Body, ThreadItem, MemberItem, FromList")] Message message, int FromList, string topicName)   // from Message model
+        //public ActionResult Edit([Bind(Include = "MessageID,Date,From,Subject,Body, MemberItem, ThreadItem, FromList")] MessageViewModel messageVM, int FromList, string topicName)  
+        //public ActionResult Edit([Bind(Include = "MessageID,Date,From,Subject,Body")] Message message)  // removed 'To' from Bind
         {
-            if (ModelState.IsValid)
+            if (ModelState.IsValid) // problem with Model 
             {
-                db.Entry(message).State = EntityState.Modified;
-                db.SaveChanges();
+                db.Entry(message).State = EntityState.Modified;  
+                //db.Entry(messageVM).State = EntityState.Modified;  // ERROR: System.InvalidOperationException: The entity type MessageViewModel is not part of the model for the current context.
+                db.SaveChanges();  // FK conflict with Threads on UPDATE
                 return RedirectToAction("Index");
             }
             return View(message);
+            //return View(messageVM);
         }
 
         // GET: Messages/Delete/5
@@ -225,6 +253,7 @@ namespace CommInfo.Controllers
                         messageVM.MessageID = m.MessageID;
                         messageVM.From = m.From;
                         messageVM.Subject = m.Subject;
+                        messageVM.Body = m.Body;
                         messageVM.ThreadItem = t;
                         messages.Add(messageVM);
                     }
@@ -245,6 +274,7 @@ namespace CommInfo.Controllers
                                         Date = m.Date,
                                         From = m.From,
                                         Subject = m.Subject,
+                                        Body = m.Body,
                                         ThreadItem = t
                                     }).FirstOrDefault();
             return MessageVm;

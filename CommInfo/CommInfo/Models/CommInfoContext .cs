@@ -23,6 +23,8 @@ namespace CommInfo.Models
         public System.Data.Entity.DbSet<CommInfo.Models.Thread> Threads { get; set; }
 
         public System.Data.Entity.DbSet<CommInfo.Models.Forum> Fora { get; set; }
+
+        public System.Data.Entity.DbSet<CommInfo.Models.Member> Members { get; set; }
     
     }
 }

@@ -162,6 +162,7 @@
     <Compile Include="Controllers\ForaController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\MapController.cs" />
+    <Compile Include="Controllers\MembersController.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
     <Compile Include="Controllers\NewsController.cs" />
     <Compile Include="Controllers\ThreadsController.cs" />
@@ -266,6 +267,11 @@
     <Content Include="Views\Fora\Edit.cshtml" />
     <Content Include="Views\Fora\Index.cshtml" />
     <Content Include="Views\Messages\Search.cshtml" />
+    <Content Include="Views\Members\Create.cshtml" />
+    <Content Include="Views\Members\Delete.cshtml" />
+    <Content Include="Views\Members\Details.cshtml" />
+    <Content Include="Views\Members\Edit.cshtml" />
+    <Content Include="Views\Members\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
